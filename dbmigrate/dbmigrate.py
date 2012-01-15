@@ -65,8 +65,10 @@ class DBMigrate(object):
         """create a new migration file"""
         filename = os.path.join(self.directory, '%s-%s.sql' % (
             datetime.utcnow().strftime('%Y%m%d%H%M%S'), ("-").join(slug)))
-        file(filename, 'w').write('')
-        logger.info('created %s' % filename)
+        if self.dry_run:
+            print 'Would create %s' % filename
+        else:
+            file(filename, 'w').write('-- add your migration here')
 
 
 def main():
