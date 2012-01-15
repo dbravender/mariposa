@@ -49,7 +49,10 @@ class sqlite(DatabaseMigrationEngine):
             raise SQLException(str(e))
 
     def results(self, statement):
-        return self.execute(statement).fetchall()
+        try:
+            return self.connection.execute(statement).fetchall()
+        except sqlite3.OperationalError as e:
+            raise SQLException(str(e))
 
 
 class mysql(DatabaseMigrationEngine):

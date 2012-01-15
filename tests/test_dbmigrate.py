@@ -56,3 +56,15 @@ CREATE TABLE users (
 );
 INSERT INTO dbmigration (filename, sha1, date) VALUES ('20120115075349-create-user-table.sql', '00fe6624203fd0be1a6d359bf01341f18d325834', datetime());
 COMMIT;"""
+
+    def test_initial_migration(self):
+        fixtures_path = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'initial')
+        self.settings['directory'] = fixtures_path
+        dbmigrate = DBMigrate(**self.settings)
+        dbmigrate.migrate()
+        # since the database is in memory we need to reach in to get it
+        assert dbmigrate.engine.performed_migrations() == [(
+            '20120115075349-create-user-table.sql',
+            '00fe6624203fd0be1a6d359bf01341f18d325834'
+        )]
