@@ -11,6 +11,10 @@ import dbengines
 logger = logging.getLogger(__name__)
 
 
+class OutOfOrderException(Exception):
+    pass
+
+
 class DBMigrate(object):
     """A set of commands to safely migrate databases automatically"""
     def __init__(
@@ -53,6 +57,16 @@ class DBMigrate(object):
                 raise e
 
         current_migrations = self.current_migrations()
+        files_current = [x[0] for x in current_migrations]
+        files_performed = [x[0] for x in performed_migrations]
+        if len(files_performed):
+            latest_migration = max(files_performed)
+            old_unrun_migrations = filter(
+                lambda f: f < latest_migration, files_current)
+            if len(old_unrun_migrations):
+                raise OutOfOrderException(
+                    '[%s] older than the latest performed migration' %
+                        ','.join(old_unrun_migrations))
         files_to_run = set(current_migrations) - set(performed_migrations)
         sql = self.engine.sql(self.directory, files_to_run)
         if self.dry_run:

@@ -1,4 +1,4 @@
-from dbmigrate import DBMigrate
+from dbmigrate import DBMigrate, OutOfOrderException
 import os
 
 
@@ -71,3 +71,18 @@ COMMIT;""")
             '20120115075349-create-user-table.sql',
             '00fe6624203fd0be1a6d359bf01341f18d325834'
         )]
+
+    def test_out_of_order_migration(self):
+        fixtures_path = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'out-of-order-1')
+        self.settings['directory'] = fixtures_path
+        dbmigrate = DBMigrate(**self.settings)
+        dbmigrate.migrate()
+        dbmigrate.directory = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'out-of-order-2')
+        try:
+            dbmigrate.migrate()
+            assert False, "Expected an OutOfOrder exception"
+        except OutOfOrderException as e:
+            assert str(e) == ('[20120114221757-before-initial.sql] '
+                'older than the latest performed migration')
