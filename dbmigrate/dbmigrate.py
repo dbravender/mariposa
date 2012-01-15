@@ -31,7 +31,7 @@ class DBMigrate(object):
     def current_migrations(self):
         """returns the current migration files as a list of
            (filename, sha1sum) tuples"""
-        return [(filename, self.blobsha1(filename))
+        return [(os.path.basename(filename), self.blobsha1(filename))
             for filename in glob(os.path.join(self.directory, '*.sql'))]
 
     @command
@@ -54,7 +54,7 @@ class DBMigrate(object):
 
         current_migrations = self.current_migrations()
         files_to_run = set(current_migrations) - set(performed_migrations)
-        sql = self.engine.sql(files_to_run)
+        sql = self.engine.sql(self.directory, files_to_run)
         if self.dry_run:
             return sql
         else:

@@ -1,5 +1,6 @@
 import logging
 import sqlite3
+import os
 
 
 logger = logging.getLogger(__name__)
@@ -15,12 +16,13 @@ class DatabaseMigrationEngine(object):
             "CREATE TABLE dbmigration "
             "(filename varchar(255), sha1 varchar(40), date datetime);")
 
-    def sql(self, files_to_run):
+    def sql(self, directory, files_to_run):
         commands = ['BEGIN;']
         for filename, sha1 in files_to_run:
             commands.append(
                 '-- start filename: %s sha1: %s' % (filename, sha1))
-            commands += file(filename).read().splitlines()
+            commands += file(
+                os.path.join(directory, filename)).read().splitlines()
             commands.append(
                 "INSERT INTO dbmigration (filename, sha1, date) "
                 "VALUES ('%s', '%s', %s());" %
