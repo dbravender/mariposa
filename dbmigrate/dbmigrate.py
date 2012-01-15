@@ -2,6 +2,7 @@ from command import command
 from hashlib import sha1
 from optparse import OptionParser
 from datetime import datetime
+from glob import glob
 import logging
 import os
 import dbengines
@@ -27,17 +28,37 @@ class DBMigrate(object):
         s.update(text)
         return s.hexdigest()
 
+    def current_migrations(self):
+        """returns the current migration files as a list of
+           (filename, sha1sum) tuples"""
+        return [(filename, self.blobsha1(filename))
+            for filename in glob(os.path.join(self.directory, '*.sql'))]
+
     @command
-    def migrate(self, _args):
+    def migrate(self, *args):
         """migrate a database to the current schema"""
-        #status = self.engine.current_migration_status()
-        fn = '/home/dbravender/projects/dbmigrate/tests/fixtures/initial/20120115075349-create-user-table.sql'
-        files_to_run = [(fn, self.blobsha1(fn))]
+        if not self.dry_run:
+            try:
+                self.engine.create_migration_table()
+            except dbengines.SQLException:
+                # migration table has already been created
+                pass
+        try:
+            performed_migrations = self.engine.performed_migrations()
+        except dbengines.SQLException as e:
+            if self.dry_run:
+                # corner case - dry run on a database without a migration table
+                performed_migrations = []
+            else:
+                raise e
+
+        current_migrations = self.current_migrations()
+        files_to_run = set(current_migrations) - set(performed_migrations)
         sql = self.engine.sql(files_to_run)
         if self.dry_run:
             return sql
         else:
-            self.engine.sql(files_to_run)
+            self.engine.execute(sql)
 
     @command
     def create(self, slug, file=file):
