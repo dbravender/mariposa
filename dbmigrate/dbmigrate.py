@@ -16,6 +16,10 @@ class OutOfOrderException(Exception):
     pass
 
 
+class ModifiedMigrationException(Exception):
+    pass
+
+
 class DBMigrate(object):
     """A set of commands to safely migrate databases automatically"""
     def __init__(
@@ -75,8 +79,15 @@ class DBMigrate(object):
                     raise OutOfOrderException(
                         '[%s] older than the latest performed migration' %
                             ','.join(old_unrun_migrations))
-        files_to_run = set(current_migrations) - set(performed_migrations)
-        sql = self.engine.sql(self.directory, files_to_run)
+        files_sha1s_to_run = (
+            set(current_migrations) - set(performed_migrations))
+        files_to_run = set([x[0] for x in files_sha1s_to_run])
+        modified_migrations = files_to_run.intersection(files_performed)
+        if modified_migrations:
+            raise ModifiedMigrationException(
+                '[%s] migrations were modified since they were '
+                'run on this database.' % ','.join(modified_migrations))
+        sql = self.engine.sql(self.directory, files_sha1s_to_run)
         if self.dry_run:
             return sql
         else:

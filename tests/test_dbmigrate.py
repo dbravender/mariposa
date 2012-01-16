@@ -1,4 +1,6 @@
-from dbmigrate import DBMigrate, OutOfOrderException
+from dbmigrate import (
+    DBMigrate, OutOfOrderException, ModifiedMigrationException
+)
 import os
 
 
@@ -102,3 +104,19 @@ COMMIT;""")
              'c7fc17564f24f7b960e9ef3f6f9130203cc87dc9'),
             ('20120115221757-initial.sql',
              '841ea60d649264965a3e8c8a955fd7aad54dad3e')]
+
+    def test_modified_migrations_detected(self):
+        fixtures_path = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'modified-1')
+        self.settings['directory'] = fixtures_path
+        self.settings['out_of_order'] = True
+        dbmigrate = DBMigrate(**self.settings)
+        dbmigrate.migrate()
+        dbmigrate.directory = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'modified-2')
+        try:
+            dbmigrate.migrate()
+            assert False, 'Expected a ModifiedMigrationException'
+        except ModifiedMigrationException as e:
+            assert str(e) == ('[20120115221757-initial.sql] migrations were '
+                'modified since they were run on this database.')

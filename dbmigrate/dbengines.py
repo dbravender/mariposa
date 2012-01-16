@@ -16,9 +16,9 @@ class DatabaseMigrationEngine(object):
             "CREATE TABLE dbmigration "
             "(filename varchar(255), sha1 varchar(40), date datetime);")
 
-    def sql(self, directory, files_to_run):
+    def sql(self, directory, files_sha1s_to_run):
         commands = ['BEGIN;']
-        for filename, sha1 in files_to_run:
+        for filename, sha1 in files_sha1s_to_run:
             commands.append(
                 '-- start filename: %s sha1: %s' % (filename, sha1))
             commands += file(
