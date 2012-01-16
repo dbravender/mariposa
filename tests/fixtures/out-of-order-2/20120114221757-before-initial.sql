@@ -1,1 +1,1 @@
-CREATE TABLE testing (differenttestrow VARCHAR(20));
+CREATE TABLE anothertesting (differenttestrow VARCHAR(20));

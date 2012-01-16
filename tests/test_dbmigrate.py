@@ -86,3 +86,19 @@ COMMIT;""")
         except OutOfOrderException as e:
             assert str(e) == ('[20120114221757-before-initial.sql] '
                 'older than the latest performed migration')
+
+    def test_allowed_out_of_order_migration(self):
+        fixtures_path = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'out-of-order-1')
+        self.settings['directory'] = fixtures_path
+        self.settings['out_of_order'] = True
+        dbmigrate = DBMigrate(**self.settings)
+        dbmigrate.migrate()
+        dbmigrate.directory = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'out-of-order-2')
+        dbmigrate.migrate()
+        assert dbmigrate.engine.performed_migrations() == [
+            ('20120114221757-before-initial.sql',
+             'c7fc17564f24f7b960e9ef3f6f9130203cc87dc9'),
+            ('20120115221757-initial.sql',
+             '841ea60d649264965a3e8c8a955fd7aad54dad3e')]

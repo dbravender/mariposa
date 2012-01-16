@@ -5,6 +5,7 @@ from datetime import datetime
 from glob import glob
 import logging
 import os
+import sys
 import dbengines
 
 
@@ -38,6 +39,9 @@ class DBMigrate(object):
         return [(os.path.basename(filename), self.blobsha1(filename))
             for filename in glob(os.path.join(self.directory, '*.sql'))]
 
+    def warn(self, message):
+        sys.stderr.write(message)
+
     @command
     def migrate(self, *args):
         """migrate a database to the current schema"""
@@ -64,9 +68,13 @@ class DBMigrate(object):
             old_unrun_migrations = filter(
                 lambda f: f < latest_migration, files_current)
             if len(old_unrun_migrations):
-                raise OutOfOrderException(
-                    '[%s] older than the latest performed migration' %
+                if self.out_of_order:
+                    self.warn('Running [%s] out of order.' %
                         ','.join(old_unrun_migrations))
+                else:
+                    raise OutOfOrderException(
+                        '[%s] older than the latest performed migration' %
+                            ','.join(old_unrun_migrations))
         files_to_run = set(current_migrations) - set(performed_migrations)
         sql = self.engine.sql(self.directory, files_to_run)
         if self.dry_run:
