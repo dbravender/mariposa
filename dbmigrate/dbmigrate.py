@@ -44,7 +44,7 @@ class DBMigrate(object):
             for filename in glob(os.path.join(self.directory, '*.sql'))]
 
     def warn(self, message):
-        sys.stderr.write(message)
+        sys.stderr.write(message + "\n")
 
     @command
     def migrate(self, *args):
