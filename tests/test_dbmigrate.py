@@ -2,6 +2,10 @@ from dbmigrate import (
     DBMigrate, OutOfOrderException, ModifiedMigrationException
 )
 import os
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 
 class FakeFile(object):
@@ -16,12 +20,22 @@ class FakeFile(object):
 
 class TestDBMigrate(object):
     def setUp(self):
+        engine = os.environ.get('DBMIGRATE_ENGINE', 'sqlite')
+        connection_string = os.environ.get('DBMIGRATE_CONNECTION', ':memory:')
         self.settings = {
             'out_of_order': False,
             'dry_run': False,
-            'engine': 'sqlite',
-            'connection_string': ':memory:',
+            'engine': engine,
+            'connection_string': connection_string,
         }
+        if engine == 'mysql':
+            import MySQLdb
+            connection_settings = json.loads(connection_string)
+            # create the test database
+            db = connection_settings.pop('db')
+            c = MySQLdb.connect(**connection_settings)
+            c.cursor().execute('DROP DATABASE IF EXISTS %s' % db)
+            c.cursor().execute('CREATE DATABASE %s' % db)
 
     def test_create(self):
         self.settings['directory'] = '/tmp'
@@ -59,8 +73,8 @@ CREATE TABLE users (
 );
 INSERT INTO dbmigration (filename, sha1, date) VALUES ("""
 """'20120115075349-create-user-table.sql', """
-"""'00fe6624203fd0be1a6d359bf01341f18d325834', datetime());
-COMMIT;""")
+"""'00fe6624203fd0be1a6d359bf01341f18d325834', %s());
+COMMIT;""" % dbmigrate.engine.date_func)
 
     def test_initial_migration(self):
         fixtures_path = os.path.join(

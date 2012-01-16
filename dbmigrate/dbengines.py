@@ -1,6 +1,10 @@
 import logging
 import sqlite3
 import os
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 
 logger = logging.getLogger(__name__)
@@ -58,3 +62,21 @@ class sqlite(DatabaseMigrationEngine):
 class mysql(DatabaseMigrationEngine):
     """a migration engine for mysql"""
     date_func = 'now'
+
+    def __init__(self, connection_string):
+        import MySQLdb as mysql
+        self.mysql = mysql
+        self.connection = mysql.connect(**json.loads(connection_string))
+
+    def execute(self, statement):
+        try:
+            c = self.connection.cursor()
+            c.execute(statement)
+            return c
+        except self.mysql.ProgrammingError as e:
+            raise SQLException(str(e))
+        except self.mysql.OperationalError as e:
+            raise SQLException(str(e))
+
+    def results(self, statement):
+        return list(self.execute(statement).fetchall())
