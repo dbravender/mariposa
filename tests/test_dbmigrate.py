@@ -109,7 +109,6 @@ COMMIT;""")
         fixtures_path = os.path.join(
             os.path.dirname(__file__), 'fixtures', 'modified-1')
         self.settings['directory'] = fixtures_path
-        self.settings['out_of_order'] = True
         dbmigrate = DBMigrate(**self.settings)
         dbmigrate.migrate()
         dbmigrate.directory = os.path.join(
@@ -120,3 +119,18 @@ COMMIT;""")
         except ModifiedMigrationException as e:
             assert str(e) == ('[20120115221757-initial.sql] migrations were '
                 'modified since they were run on this database.')
+
+    def test_deleted_migrations_detected(self):
+        fixtures_path = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'deleted-1')
+        self.settings['directory'] = fixtures_path
+        dbmigrate = DBMigrate(**self.settings)
+        dbmigrate.migrate()
+        dbmigrate.directory = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'deleted-2')
+        try:
+            dbmigrate.migrate()
+            assert False, 'Expected a ModifiedMigrationException'
+        except ModifiedMigrationException as e:
+            assert str(e) == ('[20120115221757-initial.sql] migrations were '
+                'deleted since they were run on this database.')

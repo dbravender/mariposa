@@ -81,12 +81,18 @@ class DBMigrate(object):
                             ','.join(old_unrun_migrations))
         files_sha1s_to_run = (
             set(current_migrations) - set(performed_migrations))
-        files_to_run = set([x[0] for x in files_sha1s_to_run])
-        modified_migrations = files_to_run.intersection(files_performed)
+        files_to_run = [x[0] for x in files_sha1s_to_run]
+        modified_migrations = set(files_to_run).intersection(files_performed)
         if modified_migrations:
             raise ModifiedMigrationException(
                 '[%s] migrations were modified since they were '
                 'run on this database.' % ','.join(modified_migrations))
+        deleted_migrations = (
+            set(files_performed + files_to_run) - set(files_current))
+        if deleted_migrations:
+            raise ModifiedMigrationException(
+                '[%s] migrations were deleted since they were '
+                'run on this database.' % ','.join(deleted_migrations))
         sql = self.engine.sql(self.directory, files_sha1s_to_run)
         if self.dry_run:
             return sql
