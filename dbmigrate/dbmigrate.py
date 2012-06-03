@@ -67,10 +67,13 @@ class DBMigrate(object):
         current_migrations = self.current_migrations()
         files_current = [x[0] for x in current_migrations]
         files_performed = [x[0] for x in performed_migrations]
+        files_sha1s_to_run = (
+            set(current_migrations) - set(performed_migrations))
+        files_to_run = [x[0] for x in files_sha1s_to_run]
         if len(files_performed):
             latest_migration = max(files_performed)
             old_unrun_migrations = filter(
-                lambda f: f < latest_migration, files_current)
+                lambda f: f < latest_migration, files_to_run)
             if len(old_unrun_migrations):
                 if self.out_of_order:
                     self.warn('Running [%s] out of order.' %
@@ -79,9 +82,6 @@ class DBMigrate(object):
                     raise OutOfOrderException(
                         '[%s] older than the latest performed migration' %
                             ','.join(old_unrun_migrations))
-        files_sha1s_to_run = (
-            set(current_migrations) - set(performed_migrations))
-        files_to_run = [x[0] for x in files_sha1s_to_run]
         modified_migrations = set(files_to_run).intersection(files_performed)
         if modified_migrations:
             raise ModifiedMigrationException(

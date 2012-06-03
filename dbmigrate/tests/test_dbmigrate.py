@@ -203,7 +203,7 @@ COMMIT;""" % {'date_func': dbmigrate.engine.date_func})
 
     def test_null_dry_run_migration(self):
         self.settings['directory'] = os.path.join(
-            os.path.dirname(__file__), 'fixtures', 'initial')
+            os.path.dirname(__file__), 'fixtures', 'second-run')
         dbmigrate = DBMigrate(**self.settings)
         dbmigrate.migrate()
         self.settings['dry_run'] = True
