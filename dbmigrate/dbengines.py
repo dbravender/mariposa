@@ -23,7 +23,7 @@ class DatabaseMigrationEngine(object):
 
     def sql(self, directory, files_sha1s_to_run):
         commands = ['BEGIN;']
-        for filename, sha1 in files_sha1s_to_run:
+        for filename, sha1 in sorted(files_sha1s_to_run):
             commands.append(
                 '-- start filename: %s sha1: %s' % (filename, sha1))
             commands += file(

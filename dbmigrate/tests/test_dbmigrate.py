@@ -85,6 +85,26 @@ INSERT INTO dbmigration (filename, sha1, date) VALUES ("""
 """'0187aa5e13e268fc621c894a7ac4345579cf50b7', %s());
 COMMIT;""" % dbmigrate.engine.date_func)
 
+    def test_multiple_migration_dry_run(self):
+        fixtures_path = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'second-run')
+        self.settings['directory'] = fixtures_path
+        self.settings['dry_run'] = True
+        dbmigrate = DBMigrate(**self.settings)
+        assert dbmigrate.migrate() == ("""BEGIN;
+-- start filename: 20120115075349-create-user-table.sql sha1: 0187aa5e13e268fc621c894a7ac4345579cf50b7
+-- intentionally making this imperfect so it can be migrated
+CREATE TABLE users (
+  id int PRIMARY KEY,
+  name varchar(255),
+  password_sha1 varchar(40)
+);
+INSERT INTO dbmigration (filename, sha1, date) VALUES ('20120115075349-create-user-table.sql', '0187aa5e13e268fc621c894a7ac4345579cf50b7', %(date_func)s());
+-- start filename: 20120603133552-awesome.sql sha1: 6759512e1e29b60a82b4a5587c5ea18e06b7d381
+ALTER TABLE users ADD COLUMN email varchar(70);
+INSERT INTO dbmigration (filename, sha1, date) VALUES ('20120603133552-awesome.sql', '6759512e1e29b60a82b4a5587c5ea18e06b7d381', %(date_func)s());
+COMMIT;""" % {'date_func': dbmigrate.engine.date_func})
+
     def test_initial_migration(self):
         fixtures_path = os.path.join(
             os.path.dirname(__file__), 'fixtures', 'initial')
@@ -157,3 +177,35 @@ COMMIT;""" % dbmigrate.engine.date_func)
         except ModifiedMigrationException as e:
             assert str(e) == ('[20120115221757-initial.sql] migrations were '
                 'deleted since they were run on this database.')
+
+    def test_multiple_migrations(self):
+        self.settings['directory'] = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'initial')
+        dbmigrate = DBMigrate(**self.settings)
+        dbmigrate.migrate()
+        dbmigrate.directory = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'second-run')
+        dbmigrate.migrate()
+        assert dbmigrate.engine.performed_migrations() == [
+            ('20120115075349-create-user-table.sql',
+             '0187aa5e13e268fc621c894a7ac4345579cf50b7'),
+            ('20120603133552-awesome.sql',
+             '6759512e1e29b60a82b4a5587c5ea18e06b7d381')]
+
+    def test_null_migration_after_successful_migration(self):
+        fixtures_path = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'initial')
+        self.settings['directory'] = fixtures_path
+        self.settings['out_of_order'] = False
+        dbmigrate = DBMigrate(**self.settings)
+        dbmigrate.migrate()
+        dbmigrate.migrate()
+
+    def test_null_dry_run_migration(self):
+        self.settings['directory'] = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'initial')
+        dbmigrate = DBMigrate(**self.settings)
+        dbmigrate.migrate()
+        self.settings['dry_run'] = True
+        dbmigrate = DBMigrate(**self.settings)
+        dbmigrate.migrate()
