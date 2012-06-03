@@ -15,10 +15,11 @@ class SQLException(Exception):
 
 
 class DatabaseMigrationEngine(object):
+    migration_table_sql = ("CREATE TABLE dbmigration "
+        "(filename varchar(255), sha1 varchar(40), date datetime);")
+
     def create_migration_table(self):
-        self.execute(
-            "CREATE TABLE dbmigration "
-            "(filename varchar(255), sha1 varchar(40), date datetime);")
+        self.execute(self.migration_table_sql)
 
     def sql(self, directory, files_sha1s_to_run):
         commands = ['BEGIN;']
@@ -59,24 +60,47 @@ class sqlite(DatabaseMigrationEngine):
             raise SQLException(str(e))
 
 
-class mysql(DatabaseMigrationEngine):
-    """a migration engine for mysql"""
+class GenericEngine(DatabaseMigrationEngine):
+    """a generic database engine"""
     date_func = 'now'
 
     def __init__(self, connection_string):
-        import MySQLdb as mysql
-        self.mysql = mysql
-        self.connection = mysql.connect(**json.loads(connection_string))
+        self.connection = self.engine.connect(**json.loads(connection_string))
 
     def execute(self, statement):
         try:
             c = self.connection.cursor()
             c.execute(statement)
             return c
-        except self.mysql.ProgrammingError as e:
-            raise SQLException(str(e))
-        except self.mysql.OperationalError as e:
+        except (
+            self.engine.ProgrammingError, self.engine.OperationalError) as e:
+            self.connection.rollback()
             raise SQLException(str(e))
 
     def results(self, statement):
         return list(self.execute(statement).fetchall())
+
+
+class mysql(GenericEngine):
+    """a migration engine for mysql"""
+
+    def __init__(self, connection_string):
+        import MySQLdb
+        self.engine = MySQLdb
+        super(mysql, self).__init__(connection_string)
+
+
+class postgres(GenericEngine):
+    """a migration engine for postgres"""
+
+    migration_table_sql = ("CREATE TABLE dbmigration "
+        "(filename varchar(255), sha1 varchar(40), date timestamp);")
+
+    def __init__(self, connection_string):
+        import psycopg2
+        self.engine = psycopg2
+        connection_dict = json.loads(connection_string)
+        schema = connection_dict.pop('schema')
+        super(postgres, self).__init__(json.dumps(connection_dict))
+        if schema:
+            self.execute('SET search_path = %s' % schema)

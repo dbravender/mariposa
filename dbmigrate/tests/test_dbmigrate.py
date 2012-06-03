@@ -36,6 +36,15 @@ class TestDBMigrate(object):
             c = MySQLdb.connect(**connection_settings)
             c.cursor().execute('DROP DATABASE IF EXISTS %s' % db)
             c.cursor().execute('CREATE DATABASE %s' % db)
+        if engine == 'postgres':
+            import psycopg2
+            connection_settings = json.loads(connection_string)
+            # create the test database
+            schema = connection_settings.pop('schema')
+            c = psycopg2.connect(**connection_settings)
+            c.cursor().execute('DROP SCHEMA IF EXISTS %s CASCADE' % schema)
+            c.cursor().execute('CREATE SCHEMA %s' % schema)
+            c.commit()
 
     def test_create(self):
         self.settings['directory'] = '/tmp'
@@ -53,7 +62,7 @@ class TestDBMigrate(object):
         dbmigrate = DBMigrate(**self.settings)
         assert dbmigrate.current_migrations() == [(
                 '20120115075349-create-user-table.sql',
-                '00fe6624203fd0be1a6d359bf01341f18d325834'
+                '0187aa5e13e268fc621c894a7ac4345579cf50b7'
             )]
 
     def test_dry_run_migration(self):
@@ -64,16 +73,16 @@ class TestDBMigrate(object):
         dbmigrate = DBMigrate(**self.settings)
         assert dbmigrate.migrate() == ("""BEGIN;
 -- start filename: 20120115075349-create-user-table.sql sha1: """
-"""00fe6624203fd0be1a6d359bf01341f18d325834
+"""0187aa5e13e268fc621c894a7ac4345579cf50b7
 -- intentionally making this imperfect so it can be migrated
 CREATE TABLE users (
-  id int AUTO_INCREMENT PRIMARY KEY,
+  id int PRIMARY KEY,
   name varchar(255),
   password_sha1 varchar(40)
 );
 INSERT INTO dbmigration (filename, sha1, date) VALUES ("""
 """'20120115075349-create-user-table.sql', """
-"""'00fe6624203fd0be1a6d359bf01341f18d325834', %s());
+"""'0187aa5e13e268fc621c894a7ac4345579cf50b7', %s());
 COMMIT;""" % dbmigrate.engine.date_func)
 
     def test_initial_migration(self):
@@ -85,7 +94,7 @@ COMMIT;""" % dbmigrate.engine.date_func)
         # since the database is in memory we need to reach in to get it
         assert dbmigrate.engine.performed_migrations() == [(
             '20120115075349-create-user-table.sql',
-            '00fe6624203fd0be1a6d359bf01341f18d325834'
+            '0187aa5e13e268fc621c894a7ac4345579cf50b7'
         )]
 
     def test_out_of_order_migration(self):
