@@ -64,6 +64,33 @@ Contributing
 
 Please follow [PEP-8](http://www.python.org/dev/peps/pep-0008/) and add unit tests.
 
+Please run the tests against SQLite (default), MySQL, and Postgres (please note that the database specified in MySQL and the schema specified in the Postgres connection settings will be dropped so be sure to use test databases and schemas):
+
+     % nosetests
+    Running [20120114221757-before-initial.sql] out of order.
+    ............
+    ----------------------------------------------------------------------
+    Ran 12 tests in 0.012s
+    
+    OK
+    
+     % DBMIGRATE_ENGINE=mysql DBMIGRATE_CONNECTION='{"db":"testdbmigrate", "user":"root"}' nosetests
+    Running [20120114221757-before-initial.sql] out of order.
+    ............
+    ----------------------------------------------------------------------
+    Ran 12 tests in 5.695s
+    
+    OK
+    
+     % DBMIGRATE_ENGINE=postgres DBMIGRATE_CONNECTION='{"dbname":"dbravender","schema":"testdbmigrate"}' nosetests
+    Running [20120114221757-before-initial.sql] out of order.
+    ............
+    ----------------------------------------------------------------------
+    Ran 12 tests in 1.017s
+    
+    OK
+
+
 TODO
 ----
 
