@@ -3,6 +3,7 @@ from hashlib import sha1
 from optparse import OptionParser
 from datetime import datetime
 from glob import glob
+import subprocess
 import logging
 import os
 import sys
@@ -41,7 +42,7 @@ class DBMigrate(object):
         """returns the current migration files as a list of
            (filename, sha1sum) tuples"""
         return [(os.path.basename(filename), self.blobsha1(filename))
-            for filename in glob(os.path.join(self.directory, '*.sql'))]
+            for filename in glob(os.path.join(self.directory, '*'))]
 
     def warn(self, message):
         sys.stderr.write(message + "\n")
@@ -93,11 +94,21 @@ class DBMigrate(object):
             raise ModifiedMigrationException(
                 '[%s] migrations were deleted since they were '
                 'run on this database.' % ','.join(deleted_migrations))
-        sql = self.engine.sql(self.directory, files_sha1s_to_run)
+        command_sql = self.engine.sql(self.directory, files_sha1s_to_run)
         if self.dry_run:
-            return sql
+            response = []
+            for command, sql in command_sql:
+                if command:
+                    response.append('command: ' + command)
+                if sql:
+                    response.append('sql: ' + sql)
+            return '\n'.join(response)
         else:
-            self.engine.execute(sql)
+            for command, sql in command_sql:
+                if command:
+                    subprocess.check_call(command)
+                if sql:
+                    self.engine.execute(sql)
 
     @command
     def create(self, slug, file=file):

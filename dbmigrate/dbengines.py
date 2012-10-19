@@ -22,18 +22,22 @@ class DatabaseMigrationEngine(object):
         self.execute(self.migration_table_sql)
 
     def sql(self, directory, files_sha1s_to_run):
-        commands = ['BEGIN;']
         for filename, sha1 in sorted(files_sha1s_to_run):
-            commands.append(
+            command = None
+            sql_statements = ['BEGIN;']
+            sql_statements.append(
                 '-- start filename: %s sha1: %s' % (filename, sha1))
-            commands += file(
-                os.path.join(directory, filename)).read().splitlines()
-            commands.append(
+            if os.path.splitext(filename)[-1] == '.sql':
+                sql_statements += file(
+                    os.path.join(directory, filename)).read().splitlines()
+            else:
+                command = os.path.join(directory, filename)
+            sql_statements.append(
                 "INSERT INTO dbmigration (filename, sha1, date) "
                 "VALUES ('%s', '%s', %s());" %
                     (filename, sha1, self.date_func))
-        commands.append('COMMIT;')
-        return "\n".join(commands)
+            sql_statements.append('COMMIT;')
+            yield command, "\n".join(sql_statements)
 
     def performed_migrations(self):
         return self.results(

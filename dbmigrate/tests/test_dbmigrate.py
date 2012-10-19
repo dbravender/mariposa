@@ -1,6 +1,7 @@
 from dbmigrate import (
     DBMigrate, OutOfOrderException, ModifiedMigrationException
 )
+import subprocess
 import os
 try:
     import json
@@ -71,7 +72,7 @@ class TestDBMigrate(object):
         self.settings['directory'] = fixtures_path
         self.settings['dry_run'] = True
         dbmigrate = DBMigrate(**self.settings)
-        assert dbmigrate.migrate() == ("""BEGIN;
+        assert dbmigrate.migrate() == ("""sql: BEGIN;
 -- start filename: 20120115075349-create-user-table.sql sha1: """
 """0187aa5e13e268fc621c894a7ac4345579cf50b7
 -- intentionally making this imperfect so it can be migrated
@@ -91,7 +92,7 @@ COMMIT;""" % dbmigrate.engine.date_func)
         self.settings['directory'] = fixtures_path
         self.settings['dry_run'] = True
         dbmigrate = DBMigrate(**self.settings)
-        assert dbmigrate.migrate() == ("""BEGIN;
+        assert dbmigrate.migrate() == ("""sql: BEGIN;
 -- start filename: 20120115075349-create-user-table.sql sha1: 0187aa5e13e268fc621c894a7ac4345579cf50b7
 -- intentionally making this imperfect so it can be migrated
 CREATE TABLE users (
@@ -100,6 +101,8 @@ CREATE TABLE users (
   password_sha1 varchar(40)
 );
 INSERT INTO dbmigration (filename, sha1, date) VALUES ('20120115075349-create-user-table.sql', '0187aa5e13e268fc621c894a7ac4345579cf50b7', %(date_func)s());
+COMMIT;
+sql: BEGIN;
 -- start filename: 20120603133552-awesome.sql sha1: 6759512e1e29b60a82b4a5587c5ea18e06b7d381
 ALTER TABLE users ADD COLUMN email varchar(70);
 INSERT INTO dbmigration (filename, sha1, date) VALUES ('20120603133552-awesome.sql', '6759512e1e29b60a82b4a5587c5ea18e06b7d381', %(date_func)s());
@@ -209,3 +212,26 @@ COMMIT;""" % {'date_func': dbmigrate.engine.date_func})
         self.settings['dry_run'] = True
         dbmigrate = DBMigrate(**self.settings)
         dbmigrate.migrate()
+
+    def test_passing_script_migration(self):
+        self.settings['directory'] = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'arbitrary-scripts')
+        dbmigrate = DBMigrate(**self.settings)
+        dbmigrate.migrate()
+        assert dbmigrate.engine.performed_migrations() == [
+            ('20121019152404-initial.sql',
+             '4205e6d2f0c0f141098ccf8b56e04ed2e9da3f92'),
+            ('20121019152409-script.sh',
+             '837a6ab019646fae8488048e20ff2651437b2fbd'),
+            ('20121019152412-final.sql',
+             '4205e6d2f0c0f141098ccf8b56e04ed2e9da3f92')]
+
+    def test_failing_script_migration(self):
+        self.settings['directory'] = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'arbitrary-scripts-failing')
+        dbmigrate = DBMigrate(**self.settings)
+        try:
+            dbmigrate.migrate()
+            assert False, 'Expected the script to fail'
+        except subprocess.CalledProcessError as e:
+            assert '20121019152409-script.sh' in str(e)
