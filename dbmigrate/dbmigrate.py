@@ -145,7 +145,12 @@ def main():
     if not len(args):
         parser.print_help()
     else:
-        dbmigrate = DBMigrate(**vars(options))
+        options = vars(options)
+        options['engine'] = os.environ.get(
+            'DBMIGRATE_ENGINE', options['engine'])
+        options['connection_string'] = os.environ.get(
+            'DBMIGRATE_CONNECTION', options['connection_string'])
+        dbmigrate = DBMigrate(**options)
         result = command.commands[args[0]](dbmigrate, args[1:])
         if result:
             print(result)
