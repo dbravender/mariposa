@@ -1,12 +1,9 @@
 from dbmigrate import (
     DBMigrate, OutOfOrderException, ModifiedMigrationException
 )
+from dbmigrate.dbengines import loads_string_keys
 import subprocess
 import os
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 
 class FakeFile(object):
@@ -31,7 +28,7 @@ class TestDBMigrate(object):
         }
         if engine == 'mysql':
             import MySQLdb
-            connection_settings = json.loads(connection_string)
+            connection_settings = loads_string_keys(connection_string)
             # create the test database
             db = connection_settings.pop('db')
             c = MySQLdb.connect(**connection_settings)
@@ -39,7 +36,7 @@ class TestDBMigrate(object):
             c.cursor().execute('CREATE DATABASE %s' % db)
         if engine == 'postgres':
             import psycopg2
-            connection_settings = json.loads(connection_string)
+            connection_settings = loads_string_keys(connection_string)
             # create the test database
             schema = connection_settings.pop('schema')
             c = psycopg2.connect(**connection_settings)

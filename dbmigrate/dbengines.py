@@ -10,6 +10,11 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+loads_string_keys = lambda s: dict(
+    (str(k), v) for k, v in json.loads(s).items()
+)
+
+
 class SQLException(Exception):
     pass
 
@@ -69,7 +74,9 @@ class GenericEngine(DatabaseMigrationEngine):
     date_func = 'now'
 
     def __init__(self, connection_string):
-        self.connection = self.engine.connect(**json.loads(connection_string))
+        self.connection = self.engine.connect(
+            **loads_string_keys(connection_string)
+        )
 
     def execute(self, statement):
         try:
