@@ -104,7 +104,7 @@ class postgres(GenericEngine):
         import psycopg2
         self.engine = psycopg2
         connection_dict = json.loads(connection_string)
-        schema = connection_dict.pop('schema')
+        schema = connection_dict.pop('schema', None)
         super(postgres, self).__init__(json.dumps(connection_dict))
         if schema:
             self.execute('SET search_path = %s' % schema)
