@@ -1,5 +1,5 @@
 from dbmigrate import __version__
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='dbmigrate',
@@ -7,6 +7,6 @@ setup(
     description='Safely and automatically migrate database schemas',
     author='Dan Bravender',
     author_email='dan.bravender@gmail.com',
-    scripts=['bin/dbmigrate'],
+    entry_points={'console_scripts': ['dbmigrate = dbmigrate:main']},
     packages=['dbmigrate'],
 )
