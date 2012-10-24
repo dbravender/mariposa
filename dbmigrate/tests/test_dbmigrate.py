@@ -22,6 +22,7 @@ class TestDBMigrate(unittest.TestCase):
     def setUp(self):
         engine = os.environ.get('DBMIGRATE_ENGINE', 'sqlite')
         connection_string = os.environ.get('DBMIGRATE_CONNECTION', ':memory:')
+        connection_settings = loads_string_keys(connection_string)
         self.settings = {
             'out_of_order': False,
             'dry_run': False,
@@ -30,7 +31,6 @@ class TestDBMigrate(unittest.TestCase):
         }
         if engine == 'mysql':
             import MySQLdb
-            connection_settings = loads_string_keys(connection_string)
             # create the test database
             db = connection_settings.pop('db')
             c = MySQLdb.connect(**connection_settings)
@@ -38,7 +38,6 @@ class TestDBMigrate(unittest.TestCase):
             c.cursor().execute('CREATE DATABASE %s' % db)
         if engine == 'postgres':
             import psycopg2
-            connection_settings = loads_string_keys(connection_string)
             # create the test database
             database = connection_settings['database']
             schema = connection_settings.pop('schema', None)

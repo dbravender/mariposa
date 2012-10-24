@@ -1,7 +1,8 @@
-import subprocess
-import logging
 import os
 import sys
+import json
+import subprocess
+import logging
 from hashlib import sha1
 from optparse import OptionParser
 from datetime import datetime
@@ -137,14 +138,23 @@ class DBMigrate(object):
     @command
     def create(self, slug, ext="sql", open=open):
         """create a new migration file"""
+
+        create_content_map = json.loads(
+            os.environ.get("DBMIGRATE_CREATE_CONTENT", '""')
+        ) or {
+            'sql': '-- add your migration here',
+            'py': '#!/usr/bin/env python\n# add migration here',
+        }
+        content = create_content_map.get(ext, "")
+
         dstring = datetime.utcnow().strftime('%Y%m%d%H%M%S')
         slug = "-".join(slug.split(" "))
         filename = os.path.join(self.directory, '%s-%s.%s' %
                                 (dstring, slug, ext))
         if self.dry_run:
-            return 'Would create %s' % filename
+            return 'Would create %s with:\n%s' % (filename, content)
         else:
-            open(filename, 'w').write('-- add your migration here')
+            open(filename, 'w').write(content)
 
 
 def main():
