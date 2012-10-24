@@ -1,3 +1,4 @@
+import collections
 import logging
 import sqlite3
 import os
@@ -17,6 +18,9 @@ loads_string_keys = lambda s: dict(
 
 class SQLException(Exception):
     pass
+
+
+FilenameSha1 = collections.namedtuple('FilenameSha1', 'filename sha1')
 
 
 class DatabaseMigrationEngine(object):
@@ -46,8 +50,8 @@ class DatabaseMigrationEngine(object):
             yield command, "\n".join(sql_statements)
 
     def performed_migrations(self):
-        return self.results(
-            "SELECT filename, sha1 FROM dbmigration ORDER BY filename")
+        return [FilenameSha1(r[0], r[1]) for r in self.results(
+            "SELECT filename, sha1 FROM dbmigration ORDER BY filename")]
 
 
 class sqlite(DatabaseMigrationEngine):

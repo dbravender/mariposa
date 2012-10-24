@@ -3,12 +3,12 @@ from hashlib import sha1
 from optparse import OptionParser
 from datetime import datetime
 from glob import glob
-import collections
 import subprocess
 import logging
 import os
 import sys
 import dbengines
+from dbengines import FilenameSha1
 
 
 logger = logging.getLogger(__name__)
@@ -20,9 +20,6 @@ class OutOfOrderException(Exception):
 
 class ModifiedMigrationException(Exception):
     pass
-
-
-FilenameSha1 = collections.namedtuple('FilenameSha1', 'filename sha1')
 
 
 class DBMigrate(object):
@@ -45,8 +42,9 @@ class DBMigrate(object):
     def current_migrations(self):
         """returns the current migration files as a list of
            (filename, sha1sum) tuples"""
-        return [(os.path.basename(filename), self.blobsha1(filename))
-                for filename in glob(os.path.join(self.directory, '*'))]
+        return [
+            FilenameSha1(os.path.basename(filename), self.blobsha1(filename))
+            for filename in glob(os.path.join(self.directory, '*'))]
 
     def warn(self, message):
         sys.stderr.write(message + "\n")
@@ -92,11 +90,11 @@ class DBMigrate(object):
                 raise e
 
         current_migrations = self.current_migrations()
-        files_current = [x[0] for x in current_migrations]
-        files_performed = [x[0] for x in performed_migrations]
+        files_current = [x.filename for x in current_migrations]
+        files_performed = [x.filename for x in performed_migrations]
         files_sha1s_to_run = (
             set(current_migrations) - set(performed_migrations))
-        files_to_run = [x[0] for x in files_sha1s_to_run]
+        files_to_run = [x.filename for x in files_sha1s_to_run]
         if len(files_performed):
             latest_migration = max(files_performed)
             old_unrun_migrations = filter(
