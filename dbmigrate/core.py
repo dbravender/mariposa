@@ -1,14 +1,15 @@
-from dbmigrate.command import command
-from hashlib import sha1
-from optparse import OptionParser
-from datetime import datetime
-from glob import glob
 import subprocess
 import logging
 import os
 import sys
+from hashlib import sha1
+from optparse import OptionParser
+from datetime import datetime
+from glob import glob
+
 from dbmigrate import dbengines
 from dbmigrate.dbengines import FilenameSha1
+from dbmigrate.command import command
 
 
 logger = logging.getLogger(__name__)
