@@ -135,10 +135,12 @@ class DBMigrate(object):
                     self.engine.execute(sql)
 
     @command
-    def create(self, slug, file=file):
+    def create(self, slug, ext="sql", file=file):
         """create a new migration file"""
-        filename = os.path.join(self.directory, '%s-%s.sql' % (
-            datetime.utcnow().strftime('%Y%m%d%H%M%S'), ("-").join(slug)))
+        dstring = datetime.utcnow().strftime('%Y%m%d%H%M%S')
+        slug = "-".join(slug.split(" "))
+        filename = os.path.join(self.directory, '%s-%s.%s' %
+                                            (dstring, slug, ext))
         if self.dry_run:
             print 'Would create %s' % filename
         else:
@@ -187,7 +189,7 @@ def main():
         options['connection_string'] = os.environ.get(
             'DBMIGRATE_CONNECTION', options['connection_string'])
         dbmigrate = DBMigrate(**options)
-        result = command.commands[args[0]](dbmigrate, args[1:])
+        result = command.commands[args[0]](dbmigrate, *args[1:])
         if result:
             print(result)
 

@@ -60,7 +60,7 @@ class TestDBMigrate(unittest.TestCase):
         self.settings['directory'] = '/tmp'
         dbmigrate = DBMigrate(**self.settings)
         fake_file = FakeFile()
-        dbmigrate.create(['test', 'slug'], fake_file)
+        dbmigrate.create('test slug', 'sql', fake_file)
         self.assert_(fake_file.filename.startswith('/tmp'))
         self.assert_(fake_file.filename.endswith('test-slug.sql'))
         self.assertEqual(fake_file.contents, '-- add your migration here')
