@@ -139,7 +139,7 @@ class DBMigrate(object):
         dstring = datetime.utcnow().strftime('%Y%m%d%H%M%S')
         slug = "-".join(slug.split(" "))
         filename = os.path.join(self.directory, '%s-%s.%s' %
-                                            (dstring, slug, ext))
+                                (dstring, slug, ext))
         if self.dry_run:
             return 'Would create %s' % filename
         else:
