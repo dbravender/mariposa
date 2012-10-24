@@ -1,4 +1,4 @@
-from dbmigrate import (
+from dbmigrate.core import (
     DBMigrate, OutOfOrderException, ModifiedMigrationException
 )
 from dbmigrate.dbengines import loads_string_keys

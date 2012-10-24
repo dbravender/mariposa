@@ -1,3 +1,6 @@
 *.pyc
 /build
 /dbmigrate.egg-info
+/.env
+/.tox
+*.swp

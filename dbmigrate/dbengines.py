@@ -38,7 +38,7 @@ class DatabaseMigrationEngine(object):
             sql_statements.append(
                 '-- start filename: %s sha1: %s' % (filename, sha1))
             if os.path.splitext(filename)[-1] == '.sql':
-                sql_statements += file(
+                sql_statements += open(
                     os.path.join(directory, filename)).read().splitlines()
             else:
                 command = os.path.join(directory, filename)
