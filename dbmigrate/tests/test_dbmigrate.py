@@ -83,9 +83,8 @@ class TestDBMigrate(unittest.TestCase):
         self.settings['dry_run'] = True
         dbmigrate = DBMigrate(**self.settings)
         self.assertEqual(dbmigrate.migrate(), (
-            "sql: BEGIN;\n"
-            "-- start filename: 20120115075349-create-user-table.sql sha1: "
-            "0187aa5e13e268fc621c894a7ac4345579cf50b7\n"
+            "sql: -- start filename: 20120115075349-create-user-table.sql "
+            "sha1: 0187aa5e13e268fc621c894a7ac4345579cf50b7\n"
             "-- intentionally making this imperfect so it can be migrated\n"
             "CREATE TABLE users (\n"
             "  id int PRIMARY KEY,\n"
@@ -94,8 +93,8 @@ class TestDBMigrate(unittest.TestCase):
             ");\n"
             "INSERT INTO dbmigration (filename, sha1, date) VALUES ("
             "'20120115075349-create-user-table.sql', "
-            "'0187aa5e13e268fc621c894a7ac4345579cf50b7', %s());\n"
-            "COMMIT;" % dbmigrate.engine.date_func))
+            "'0187aa5e13e268fc621c894a7ac4345579cf50b7', %s());" %
+            dbmigrate.engine.date_func))
 
     def test_multiple_migration_dry_run(self):
         fixtures_path = os.path.join(
@@ -104,9 +103,8 @@ class TestDBMigrate(unittest.TestCase):
         self.settings['dry_run'] = True
         dbmigrate = DBMigrate(**self.settings)
         self.assertEqual(dbmigrate.migrate(), (
-            "sql: BEGIN;\n"
-            "-- start filename: 20120115075349-create-user-table.sql sha1: "
-            "0187aa5e13e268fc621c894a7ac4345579cf50b7\n"
+            "sql: -- start filename: 20120115075349-create-user-table.sql "
+            "sha1: 0187aa5e13e268fc621c894a7ac4345579cf50b7\n"
             "-- intentionally making this imperfect so it can be migrated\n"
             "CREATE TABLE users (\n"
             "  id int PRIMARY KEY,\n"
@@ -117,15 +115,13 @@ class TestDBMigrate(unittest.TestCase):
             "'20120115075349-create-user-table.sql', "
             "'0187aa5e13e268fc621c894a7ac4345579cf50b7', "
             "%(date_func)s());\n"
-            "COMMIT;\n"
-            "sql: BEGIN;\n"
-            "-- start filename: 20120603133552-awesome.sql sha1: "
+            "sql: -- start filename: 20120603133552-awesome.sql sha1: "
             "6759512e1e29b60a82b4a5587c5ea18e06b7d381\n"
             "ALTER TABLE users ADD COLUMN email varchar(70);\n"
             "INSERT INTO dbmigration (filename, sha1, date) VALUES ("
             "'20120603133552-awesome.sql', "
-            "'6759512e1e29b60a82b4a5587c5ea18e06b7d381', %(date_func)s());\n"
-            "COMMIT;" % {'date_func': dbmigrate.engine.date_func}))
+            "'6759512e1e29b60a82b4a5587c5ea18e06b7d381', %(date_func)s());" %
+            {'date_func': dbmigrate.engine.date_func}))
 
     def test_initial_migration(self):
         fixtures_path = os.path.join(

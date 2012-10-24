@@ -34,7 +34,7 @@ class DatabaseMigrationEngine(object):
     def sql(self, directory, files_sha1s_to_run):
         for filename, sha1 in sorted(files_sha1s_to_run):
             command = None
-            sql_statements = ['BEGIN;']
+            sql_statements = []
             sql_statements.append(
                 '-- start filename: %s sha1: %s' % (filename, sha1))
             if os.path.splitext(filename)[-1] == '.sql':
@@ -46,7 +46,6 @@ class DatabaseMigrationEngine(object):
                 "INSERT INTO dbmigration (filename, sha1, date) "
                 "VALUES ('%s', '%s', %s());" %
                 (filename, sha1, self.date_func))
-            sql_statements.append('COMMIT;')
             yield command, "\n".join(sql_statements)
 
     def performed_migrations(self):
@@ -122,3 +121,13 @@ class postgres(GenericEngine):
         super(postgres, self).__init__(json.dumps(connection_dict))
         if schema:
             self.execute('SET search_path = %s' % schema)
+
+    def execute(self, statement):
+        try:
+            c = self.connection.cursor()
+            c.execute(statement)
+            self.connection.commit()
+            return c
+        except (self.ProgrammingError, self.OperationalError) as e:
+            self.connection.rollback()
+            raise SQLException(str(e))
