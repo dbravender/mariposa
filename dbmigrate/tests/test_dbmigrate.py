@@ -264,3 +264,19 @@ class TestDBMigrate(unittest.TestCase):
             self.fail('Expected the script to fail')
         except subprocess.CalledProcessError as e:
             self.assert_('20121019152409-script.sh' in str(e))
+
+    def test_ignore_filenames_sha1_migration(self):
+        self.settings['directory'] = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'sha1-update-1')
+        dbmigrate = DBMigrate(**self.settings)
+        dbmigrate.migrate()
+        dbmigrate.directory = os.path.join(
+            os.path.dirname(__file__), 'fixtures', 'sha1-update-2')
+        dbmigrate.renamed()
+        dbmigrate.migrate()
+        self.assertEqual(
+            dbmigrate.engine.performed_migrations(),
+            [('20120115075300-add-another-test-table-renamed-reordered.sql',
+              '4aebd2514665effff5105ad568a4fbe62f567087'),
+             ('20120115075349-create-user-table.sql',
+              '0187aa5e13e268fc621c894a7ac4345579cf50b7')])

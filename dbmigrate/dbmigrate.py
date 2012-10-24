@@ -3,6 +3,7 @@ from hashlib import sha1
 from optparse import OptionParser
 from datetime import datetime
 from glob import glob
+import collections
 import subprocess
 import logging
 import os
@@ -19,6 +20,9 @@ class OutOfOrderException(Exception):
 
 class ModifiedMigrationException(Exception):
     pass
+
+
+FilenameSha1 = collections.namedtuple('FilenameSha1', 'filename sha1')
 
 
 class DBMigrate(object):
@@ -46,6 +50,28 @@ class DBMigrate(object):
 
     def warn(self, message):
         sys.stderr.write(message + "\n")
+
+    @command
+    def renamed(self, *args):
+        """rename files in the migration table if the order changed"""
+        performed_migrations = dict(
+            (v, k) for k, v in self.engine.performed_migrations())
+        current_migrations = dict(
+            (v, k) for k, v in self.current_migrations())
+        renames = []
+        for sha1, old_filename in performed_migrations.items():
+            new_filename = current_migrations.get(sha1)
+            if sha1 in current_migrations and old_filename != new_filename:
+                renames.append(FilenameSha1(new_filename, sha1))
+        sql = '\n'.join(
+            "UPDATE dbmigration SET filename = '%(filename)s' "
+            "WHERE sha1 = '%(sha1)s';" % rename._asdict()
+            for rename in renames)
+        if self.dry_run:
+            return sql
+            print sql
+        else:
+            self.engine.execute(sql)
 
     @command
     def migrate(self, *args):
