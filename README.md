@@ -37,17 +37,15 @@ If these commands are run without --dry-run they will perform the specified acti
      % dbmigrate create "some slug" py -n -d /tmp
     Would create /tmp/20121024185140-some-slug.py
 
-     % dbmigrate --dry-run --engine sqlite -c :memory: -d tests/fixtures/initial migrate
-    BEGIN;
-    -- start filename: 20120115075349-create-user-table.sql sha1: 00fe6624203fd0be1a6d359bf01341f18d325834
+     % dbmigrate --dry-run -d tests/fixtures/initial migrate
+    sql: -- start filename: 20120115075349-create-user-table.sql sha1: 0187aa5e13e268fc621c894a7ac4345579cf50b7
     -- intentionally making this imperfect so it can be migrated
     CREATE TABLE users (
-      id int AUTO_INCREMENT PRIMARY KEY,
+      id int PRIMARY KEY,
       name varchar(255),
       password_sha1 varchar(40)
     );
-    INSERT INTO dbmigration (filename, sha1, date) VALUES ('20120115075349-create-user-table.sql', '00fe6624203fd0be1a6d359bf01341f18d325834', datetime());
-    COMMIT;
+    INSERT INTO dbmigration (filename, sha1, date) VALUES ('20120115075349-create-user-table.sql', '0187aa5e13e268fc621c894a7ac4345579cf50b7', datetime());
 
 
 Behavior
@@ -74,27 +72,27 @@ Please run the tests against SQLite (default), MySQL, and Postgres (please note 
 
      % nosetests
     Running [20120114221757-before-initial.sql] out of order.
-    ............
+    .....I'm about to fail :-(
+    .........I ran!
+    .
     ----------------------------------------------------------------------
-    Ran 12 tests in 0.012s
+    Ran 15 tests in 0.032s
     
     OK
     
-     % DBMIGRATE_ENGINE=mysql DBMIGRATE_CONNECTION='{"db":"testdbmigrate", "user":"root"}' nosetests
-    Running [20120114221757-before-initial.sql] out of order.
-    ............
-    ----------------------------------------------------------------------
-    Ran 12 tests in 5.695s
+     % DBMIGRATE_ENGINE=mysql DBMIGRATE_CONNECTION='{"db":"testdbmigrate", "user":"root"}' tox
+    ...
+      py26: commands succeeded
+      py27: commands succeeded
+    ERROR:   py32: commands failed
+    [The Python 3.2 test will fail against mysql because MySQLdb-python hasn't been ported to 3.x yet]
     
-    OK
-    
-     % DBMIGRATE_ENGINE=postgres DBMIGRATE_CONNECTION='{"database":"dbravender","schema":"testdbmigrate"}' nosetests
-    Running [20120114221757-before-initial.sql] out of order.
-    ............
-    ----------------------------------------------------------------------
-    Ran 12 tests in 1.017s
-    
-    OK
+     % DBMIGRATE_ENGINE=postgres DBMIGRATE_CONNECTION='{"database":"dbravender","schema":"testdbmigrate"}' tox
+    ...
+      py26: commands succeeded
+      py27: commands succeeded
+      py32: commands succeeded
+      congratulations :)
 
 
 TODO
@@ -102,4 +100,3 @@ TODO
 
 * Settings file to simplify command invocation
 * Automated rollbacks
-* sha1-only migration mode for developers

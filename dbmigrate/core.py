@@ -1,4 +1,4 @@
-from command import command
+from dbmigrate.command import command
 from hashlib import sha1
 from optparse import OptionParser
 from datetime import datetime
@@ -7,8 +7,8 @@ import subprocess
 import logging
 import os
 import sys
-import dbengines
-from dbengines import FilenameSha1
+from dbmigrate import dbengines
+from dbmigrate.dbengines import FilenameSha1
 
 
 logger = logging.getLogger(__name__)
@@ -34,9 +34,9 @@ class DBMigrate(object):
     def blobsha1(self, filename):
         """returns the git sha1sum of a file so the exact migration
         that was run can easily be looked up in the git history"""
-        text = file(filename).read()
-        s = sha1("blob %u\0" % len(text))
-        s.update(text)
+        text = open(filename).read()
+        s = sha1(("blob %u\0" % len(text)).encode('UTF-8'))
+        s.update(text.encode('UTF-8'))
         return s.hexdigest()
 
     def current_migrations(self):
@@ -67,7 +67,6 @@ class DBMigrate(object):
             for rename in renames)
         if self.dry_run:
             return sql
-            print sql
         else:
             self.engine.execute(sql)
 
@@ -97,8 +96,8 @@ class DBMigrate(object):
         files_to_run = [x.filename for x in files_sha1s_to_run]
         if len(files_performed):
             latest_migration = max(files_performed)
-            old_unrun_migrations = filter(
-                lambda f: f < latest_migration, files_to_run)
+            old_unrun_migrations = list(filter(
+                lambda f: f < latest_migration, files_to_run))
             if len(old_unrun_migrations):
                 if self.out_of_order:
                     self.warn('Running [%s] out of order.' %
@@ -135,16 +134,16 @@ class DBMigrate(object):
                     self.engine.execute(sql)
 
     @command
-    def create(self, slug, ext="sql", file=file):
+    def create(self, slug, ext="sql", open=open):
         """create a new migration file"""
         dstring = datetime.utcnow().strftime('%Y%m%d%H%M%S')
         slug = "-".join(slug.split(" "))
         filename = os.path.join(self.directory, '%s-%s.%s' %
                                             (dstring, slug, ext))
         if self.dry_run:
-            print 'Would create %s' % filename
+            return 'Would create %s' % filename
         else:
-            file(filename, 'w').write('-- add your migration here')
+            open(filename, 'w').write('-- add your migration here')
 
 
 def main():
