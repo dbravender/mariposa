@@ -61,19 +61,20 @@ class TestDBMigrate(unittest.TestCase):
         dbmigrate = DBMigrate(**self.settings)
         fake_file = FakeFile()
         dbmigrate.create(['test', 'slug'], fake_file)
-        assert fake_file.filename.startswith('/tmp')
-        assert fake_file.filename.endswith('test-slug.sql')
-        assert fake_file.contents == '-- add your migration here'
+        self.assert_(fake_file.filename.startswith('/tmp'))
+        self.assert_(fake_file.filename.endswith('test-slug.sql'))
+        self.assertEqual(fake_file.contents, '-- add your migration here')
 
     def test_current_migrations(self):
         fixtures_path = os.path.join(
             os.path.dirname(__file__), 'fixtures', 'initial')
         self.settings['directory'] = fixtures_path
         dbmigrate = DBMigrate(**self.settings)
-        assert dbmigrate.current_migrations() == [(
-            '20120115075349-create-user-table.sql',
-            '0187aa5e13e268fc621c894a7ac4345579cf50b7'
-        )]
+        self.assertEqual(
+            dbmigrate.current_migrations(), [(
+                '20120115075349-create-user-table.sql',
+                '0187aa5e13e268fc621c894a7ac4345579cf50b7'
+            )])
 
     def test_dry_run_migration(self):
         fixtures_path = os.path.join(
@@ -133,10 +134,11 @@ class TestDBMigrate(unittest.TestCase):
         dbmigrate = DBMigrate(**self.settings)
         dbmigrate.migrate()
         # since the database is in memory we need to reach in to get it
-        assert dbmigrate.engine.performed_migrations() == [(
-            '20120115075349-create-user-table.sql',
-            '0187aa5e13e268fc621c894a7ac4345579cf50b7'
-        )]
+        self.assertEqual(
+            dbmigrate.engine.performed_migrations(), [(
+                '20120115075349-create-user-table.sql',
+                '0187aa5e13e268fc621c894a7ac4345579cf50b7'
+            )])
 
     def test_out_of_order_migration(self):
         fixtures_path = os.path.join(
@@ -148,11 +150,12 @@ class TestDBMigrate(unittest.TestCase):
             os.path.dirname(__file__), 'fixtures', 'out-of-order-2')
         try:
             dbmigrate.migrate()
-            assert False, "Expected an OutOfOrder exception"
+            self.fail('Expected an OutOfOrder exception')
         except OutOfOrderException as e:
-            assert str(e) == (
-                '[20120114221757-before-initial.sql] '
-                'older than the latest performed migration')
+            self.assertEqual(
+                str(e),
+                ('[20120114221757-before-initial.sql] '
+                 'older than the latest performed migration'))
 
     def test_allowed_out_of_order_migration(self):
         fixtures_path = os.path.join(
@@ -164,11 +167,12 @@ class TestDBMigrate(unittest.TestCase):
         dbmigrate.directory = os.path.join(
             os.path.dirname(__file__), 'fixtures', 'out-of-order-2')
         dbmigrate.migrate()
-        assert dbmigrate.engine.performed_migrations() == [
-            ('20120114221757-before-initial.sql',
-             'c7fc17564f24f7b960e9ef3f6f9130203cc87dc9'),
-            ('20120115221757-initial.sql',
-             '841ea60d649264965a3e8c8a955fd7aad54dad3e')]
+        self.assertEqual(
+            dbmigrate.engine.performed_migrations(),
+            [('20120114221757-before-initial.sql',
+              'c7fc17564f24f7b960e9ef3f6f9130203cc87dc9'),
+             ('20120115221757-initial.sql',
+              '841ea60d649264965a3e8c8a955fd7aad54dad3e')])
 
     def test_modified_migrations_detected(self):
         fixtures_path = os.path.join(
@@ -180,11 +184,12 @@ class TestDBMigrate(unittest.TestCase):
             os.path.dirname(__file__), 'fixtures', 'modified-2')
         try:
             dbmigrate.migrate()
-            assert False, 'Expected a ModifiedMigrationException'
+            self.fail('Expected a ModifiedMigrationException')
         except ModifiedMigrationException as e:
-            assert str(e) == (
-                '[20120115221757-initial.sql] migrations were '
-                'modified since they were run on this database.')
+            self.assertEqual(
+                str(e),
+                ('[20120115221757-initial.sql] migrations were '
+                 'modified since they were run on this database.'))
 
     def test_deleted_migrations_detected(self):
         fixtures_path = os.path.join(
@@ -196,11 +201,12 @@ class TestDBMigrate(unittest.TestCase):
             os.path.dirname(__file__), 'fixtures', 'deleted-2')
         try:
             dbmigrate.migrate()
-            assert False, 'Expected a ModifiedMigrationException'
+            self.fail('Expected a ModifiedMigrationException')
         except ModifiedMigrationException as e:
-            assert str(e) == (
-                '[20120115221757-initial.sql] migrations were '
-                'deleted since they were run on this database.')
+            self.assertEqual(
+                str(e),
+                ('[20120115221757-initial.sql] migrations were '
+                 'deleted since they were run on this database.'))
 
     def test_multiple_migrations(self):
         self.settings['directory'] = os.path.join(
@@ -210,11 +216,12 @@ class TestDBMigrate(unittest.TestCase):
         dbmigrate.directory = os.path.join(
             os.path.dirname(__file__), 'fixtures', 'second-run')
         dbmigrate.migrate()
-        assert dbmigrate.engine.performed_migrations() == [
-            ('20120115075349-create-user-table.sql',
-             '0187aa5e13e268fc621c894a7ac4345579cf50b7'),
-            ('20120603133552-awesome.sql',
-             '6759512e1e29b60a82b4a5587c5ea18e06b7d381')]
+        self.assertEqual(
+            dbmigrate.engine.performed_migrations(),
+            [('20120115075349-create-user-table.sql',
+              '0187aa5e13e268fc621c894a7ac4345579cf50b7'),
+             ('20120603133552-awesome.sql',
+              '6759512e1e29b60a82b4a5587c5ea18e06b7d381')])
 
     def test_null_migration_after_successful_migration(self):
         fixtures_path = os.path.join(
@@ -239,13 +246,14 @@ class TestDBMigrate(unittest.TestCase):
             os.path.dirname(__file__), 'fixtures', 'arbitrary-scripts')
         dbmigrate = DBMigrate(**self.settings)
         dbmigrate.migrate()
-        assert dbmigrate.engine.performed_migrations() == [
-            ('20121019152404-initial.sql',
-             '4205e6d2f0c0f141098ccf8b56e04ed2e9da3f92'),
-            ('20121019152409-script.sh',
-             '837a6ab019646fae8488048e20ff2651437b2fbd'),
-            ('20121019152412-final.sql',
-             '4205e6d2f0c0f141098ccf8b56e04ed2e9da3f92')]
+        self.assertEqual(
+            dbmigrate.engine.performed_migrations(),
+            [('20121019152404-initial.sql',
+              '4205e6d2f0c0f141098ccf8b56e04ed2e9da3f92'),
+             ('20121019152409-script.sh',
+              '837a6ab019646fae8488048e20ff2651437b2fbd'),
+             ('20121019152412-final.sql',
+              '4205e6d2f0c0f141098ccf8b56e04ed2e9da3f92')])
 
     def test_failing_script_migration(self):
         self.settings['directory'] = os.path.join(
@@ -253,6 +261,6 @@ class TestDBMigrate(unittest.TestCase):
         dbmigrate = DBMigrate(**self.settings)
         try:
             dbmigrate.migrate()
-            assert False, 'Expected the script to fail'
+            self.fail('Expected the script to fail')
         except subprocess.CalledProcessError as e:
-            assert '20121019152409-script.sh' in str(e)
+            self.assert_('20121019152409-script.sh' in str(e))
