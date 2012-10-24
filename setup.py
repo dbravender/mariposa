@@ -7,6 +7,6 @@ setup(
     description='Safely and automatically migrate database schemas',
     author='Dan Bravender',
     author_email='dan.bravender@gmail.com',
-    entry_points={'console_scripts': ['dbmigrate = dbmigrate:main']},
+    entry_points={'console_scripts': ['dbmigrate = dbmigrate.core:main']},
     packages=['dbmigrate'],
 )
