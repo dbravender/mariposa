@@ -38,11 +38,26 @@ class TestDBMigrate(object):
             import psycopg2
             connection_settings = loads_string_keys(connection_string)
             # create the test database
-            schema = connection_settings.pop('schema')
-            c = psycopg2.connect(**connection_settings)
-            c.cursor().execute('DROP SCHEMA IF EXISTS %s CASCADE' % schema)
-            c.cursor().execute('CREATE SCHEMA %s' % schema)
-            c.commit()
+            database = connection_settings['database']
+            schema = connection_settings.pop('schema', None)
+
+            if schema is None:
+                c = psycopg2.connect(database='template1')
+                c.set_isolation_level(0)
+                cur = c.cursor()
+                cur.execute('DROP DATABASE IF EXISTS %s' % database)
+                cur.execute('CREATE DATABASE %s' % database)
+
+            else:
+                c = psycopg2.connect(**connection_settings)
+                c.cursor().execute('DROP SCHEMA IF EXISTS %s CASCADE' % schema)
+                c.cursor().execute('CREATE SCHEMA %s' % schema)
+                c.commit()
+
+        print "setUp\n"
+
+    def tearDown(self):
+        print "tearDown\n"
 
     def test_create(self):
         self.settings['directory'] = '/tmp'
