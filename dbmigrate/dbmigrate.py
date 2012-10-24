@@ -23,8 +23,8 @@ class ModifiedMigrationException(Exception):
 
 class DBMigrate(object):
     """A set of commands to safely migrate databases automatically"""
-    def __init__(
-        self, out_of_order, dry_run, engine, connection_string, directory):
+    def __init__(self, out_of_order, dry_run, engine, connection_string,
+                 directory):
         self.out_of_order = out_of_order
         self.dry_run = dry_run
         self.engine = getattr(dbengines, engine)(connection_string)
@@ -42,7 +42,7 @@ class DBMigrate(object):
         """returns the current migration files as a list of
            (filename, sha1sum) tuples"""
         return [(os.path.basename(filename), self.blobsha1(filename))
-            for filename in glob(os.path.join(self.directory, '*'))]
+                for filename in glob(os.path.join(self.directory, '*'))]
 
     def warn(self, message):
         sys.stderr.write(message + "\n")
@@ -78,11 +78,11 @@ class DBMigrate(object):
             if len(old_unrun_migrations):
                 if self.out_of_order:
                     self.warn('Running [%s] out of order.' %
-                        ','.join(old_unrun_migrations))
+                              ','.join(old_unrun_migrations))
                 else:
                     raise OutOfOrderException(
                         '[%s] older than the latest performed migration' %
-                            ','.join(old_unrun_migrations))
+                        ','.join(old_unrun_migrations))
         modified_migrations = set(files_to_run).intersection(files_performed)
         if modified_migrations:
             raise ModifiedMigrationException(

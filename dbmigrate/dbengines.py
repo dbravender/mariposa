@@ -20,7 +20,8 @@ class SQLException(Exception):
 
 
 class DatabaseMigrationEngine(object):
-    migration_table_sql = ("CREATE TABLE dbmigration "
+    migration_table_sql = (
+        "CREATE TABLE dbmigration "
         "(filename varchar(255), sha1 varchar(40), date datetime);")
 
     def create_migration_table(self):
@@ -40,7 +41,7 @@ class DatabaseMigrationEngine(object):
             sql_statements.append(
                 "INSERT INTO dbmigration (filename, sha1, date) "
                 "VALUES ('%s', '%s', %s());" %
-                    (filename, sha1, self.date_func))
+                (filename, sha1, self.date_func))
             sql_statements.append('COMMIT;')
             yield command, "\n".join(sql_statements)
 
@@ -77,14 +78,15 @@ class GenericEngine(DatabaseMigrationEngine):
         self.connection = self.engine.connect(
             **loads_string_keys(connection_string)
         )
+        self.ProgrammingError = self.engine.ProgrammingError
+        self.OperationalError = self.engine.OperationalError
 
     def execute(self, statement):
         try:
             c = self.connection.cursor()
             c.execute(statement)
             return c
-        except (
-            self.engine.ProgrammingError, self.engine.OperationalError) as e:
+        except (self.ProgrammingError, self.OperationalError) as e:
             self.connection.rollback()
             raise SQLException(str(e))
 
@@ -104,7 +106,8 @@ class mysql(GenericEngine):
 class postgres(GenericEngine):
     """a migration engine for postgres"""
 
-    migration_table_sql = ("CREATE TABLE dbmigration "
+    migration_table_sql = (
+        "CREATE TABLE dbmigration "
         "(filename varchar(255), sha1 varchar(40), date timestamp);")
 
     def __init__(self, connection_string):

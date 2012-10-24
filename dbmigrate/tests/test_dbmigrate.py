@@ -5,6 +5,8 @@ from dbmigrate.dbengines import loads_string_keys
 import subprocess
 import os
 
+import unittest
+
 
 class FakeFile(object):
     def __call__(self, filename, options):
@@ -16,7 +18,7 @@ class FakeFile(object):
         self.contents = contents
 
 
-class TestDBMigrate(object):
+class TestDBMigrate(unittest.TestCase):
     def setUp(self):
         engine = os.environ.get('DBMIGRATE_ENGINE', 'sqlite')
         connection_string = os.environ.get('DBMIGRATE_CONNECTION', ':memory:')
@@ -69,9 +71,9 @@ class TestDBMigrate(object):
         self.settings['directory'] = fixtures_path
         dbmigrate = DBMigrate(**self.settings)
         assert dbmigrate.current_migrations() == [(
-                '20120115075349-create-user-table.sql',
-                '0187aa5e13e268fc621c894a7ac4345579cf50b7'
-            )]
+            '20120115075349-create-user-table.sql',
+            '0187aa5e13e268fc621c894a7ac4345579cf50b7'
+        )]
 
     def test_dry_run_migration(self):
         fixtures_path = os.path.join(
@@ -79,19 +81,20 @@ class TestDBMigrate(object):
         self.settings['directory'] = fixtures_path
         self.settings['dry_run'] = True
         dbmigrate = DBMigrate(**self.settings)
-        assert dbmigrate.migrate() == ("""sql: BEGIN;
--- start filename: 20120115075349-create-user-table.sql sha1: """
-"""0187aa5e13e268fc621c894a7ac4345579cf50b7
--- intentionally making this imperfect so it can be migrated
-CREATE TABLE users (
-  id int PRIMARY KEY,
-  name varchar(255),
-  password_sha1 varchar(40)
-);
-INSERT INTO dbmigration (filename, sha1, date) VALUES ("""
-"""'20120115075349-create-user-table.sql', """
-"""'0187aa5e13e268fc621c894a7ac4345579cf50b7', %s());
-COMMIT;""" % dbmigrate.engine.date_func)
+        self.assertEqual(dbmigrate.migrate(), (
+            "sql: BEGIN;\n"
+            "-- start filename: 20120115075349-create-user-table.sql sha1: "
+            "0187aa5e13e268fc621c894a7ac4345579cf50b7\n"
+            "-- intentionally making this imperfect so it can be migrated\n"
+            "CREATE TABLE users (\n"
+            "  id int PRIMARY KEY,\n"
+            "  name varchar(255),\n"
+            "  password_sha1 varchar(40)\n"
+            ");\n"
+            "INSERT INTO dbmigration (filename, sha1, date) VALUES ("
+            "'20120115075349-create-user-table.sql', "
+            "'0187aa5e13e268fc621c894a7ac4345579cf50b7', %s());\n"
+            "COMMIT;" % dbmigrate.engine.date_func))
 
     def test_multiple_migration_dry_run(self):
         fixtures_path = os.path.join(
@@ -99,21 +102,29 @@ COMMIT;""" % dbmigrate.engine.date_func)
         self.settings['directory'] = fixtures_path
         self.settings['dry_run'] = True
         dbmigrate = DBMigrate(**self.settings)
-        assert dbmigrate.migrate() == ("""sql: BEGIN;
--- start filename: 20120115075349-create-user-table.sql sha1: 0187aa5e13e268fc621c894a7ac4345579cf50b7
--- intentionally making this imperfect so it can be migrated
-CREATE TABLE users (
-  id int PRIMARY KEY,
-  name varchar(255),
-  password_sha1 varchar(40)
-);
-INSERT INTO dbmigration (filename, sha1, date) VALUES ('20120115075349-create-user-table.sql', '0187aa5e13e268fc621c894a7ac4345579cf50b7', %(date_func)s());
-COMMIT;
-sql: BEGIN;
--- start filename: 20120603133552-awesome.sql sha1: 6759512e1e29b60a82b4a5587c5ea18e06b7d381
-ALTER TABLE users ADD COLUMN email varchar(70);
-INSERT INTO dbmigration (filename, sha1, date) VALUES ('20120603133552-awesome.sql', '6759512e1e29b60a82b4a5587c5ea18e06b7d381', %(date_func)s());
-COMMIT;""" % {'date_func': dbmigrate.engine.date_func})
+        self.assertEqual(dbmigrate.migrate(), (
+            "sql: BEGIN;\n"
+            "-- start filename: 20120115075349-create-user-table.sql sha1: "
+            "0187aa5e13e268fc621c894a7ac4345579cf50b7\n"
+            "-- intentionally making this imperfect so it can be migrated\n"
+            "CREATE TABLE users (\n"
+            "  id int PRIMARY KEY,\n"
+            "  name varchar(255),\n"
+            "  password_sha1 varchar(40)\n"
+            ");\n"
+            "INSERT INTO dbmigration (filename, sha1, date) VALUES ("
+            "'20120115075349-create-user-table.sql', "
+            "'0187aa5e13e268fc621c894a7ac4345579cf50b7', "
+            "%(date_func)s());\n"
+            "COMMIT;\n"
+            "sql: BEGIN;\n"
+            "-- start filename: 20120603133552-awesome.sql sha1: "
+            "6759512e1e29b60a82b4a5587c5ea18e06b7d381\n"
+            "ALTER TABLE users ADD COLUMN email varchar(70);\n"
+            "INSERT INTO dbmigration (filename, sha1, date) VALUES ("
+            "'20120603133552-awesome.sql', "
+            "'6759512e1e29b60a82b4a5587c5ea18e06b7d381', %(date_func)s());\n"
+            "COMMIT;" % {'date_func': dbmigrate.engine.date_func}))
 
     def test_initial_migration(self):
         fixtures_path = os.path.join(
@@ -139,7 +150,8 @@ COMMIT;""" % {'date_func': dbmigrate.engine.date_func})
             dbmigrate.migrate()
             assert False, "Expected an OutOfOrder exception"
         except OutOfOrderException as e:
-            assert str(e) == ('[20120114221757-before-initial.sql] '
+            assert str(e) == (
+                '[20120114221757-before-initial.sql] '
                 'older than the latest performed migration')
 
     def test_allowed_out_of_order_migration(self):
@@ -170,7 +182,8 @@ COMMIT;""" % {'date_func': dbmigrate.engine.date_func})
             dbmigrate.migrate()
             assert False, 'Expected a ModifiedMigrationException'
         except ModifiedMigrationException as e:
-            assert str(e) == ('[20120115221757-initial.sql] migrations were '
+            assert str(e) == (
+                '[20120115221757-initial.sql] migrations were '
                 'modified since they were run on this database.')
 
     def test_deleted_migrations_detected(self):
@@ -185,7 +198,8 @@ COMMIT;""" % {'date_func': dbmigrate.engine.date_func})
             dbmigrate.migrate()
             assert False, 'Expected a ModifiedMigrationException'
         except ModifiedMigrationException as e:
-            assert str(e) == ('[20120115221757-initial.sql] migrations were '
+            assert str(e) == (
+                '[20120115221757-initial.sql] migrations were '
                 'deleted since they were run on this database.')
 
     def test_multiple_migrations(self):
