@@ -82,7 +82,7 @@ Please run the tests against SQLite (default), MySQL, and Postgres (please note 
     
     OK
     
-     % DBMIGRATE_ENGINE=postgres DBMIGRATE_CONNECTION='{"dbname":"dbravender","schema":"testdbmigrate"}' nosetests
+     % DBMIGRATE_ENGINE=postgres DBMIGRATE_CONNECTION='{"database":"dbravender","schema":"testdbmigrate"}' nosetests
     Running [20120114221757-before-initial.sql] out of order.
     ............
     ----------------------------------------------------------------------

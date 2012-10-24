@@ -139,17 +139,18 @@ def main():
     parser.add_option(
         "-e", "--engine", dest="engine", action="store",
         help="database engine",
-        default="mysql",
+        default="sqlite",
         type="string")
     parser.add_option(
         "-c", "--connection-string", dest="connection_string", action="store",
         help="string used by the database engine to connect to the database",
+        default=":memory:",
         type="string")
     parser.add_option(
         "-d", "--directory", dest="directory", action="store",
         help="directory where the migrations are stored",
         type="string",
-        default="dbmigrations")
+        default=".")
 
     (options, args) = parser.parse_args()
 
