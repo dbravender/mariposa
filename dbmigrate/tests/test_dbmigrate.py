@@ -54,11 +54,6 @@ class TestDBMigrate(object):
                 c.cursor().execute('CREATE SCHEMA %s' % schema)
                 c.commit()
 
-        print "setUp\n"
-
-    def tearDown(self):
-        print "tearDown\n"
-
     def test_create(self):
         self.settings['directory'] = '/tmp'
         dbmigrate = DBMigrate(**self.settings)
