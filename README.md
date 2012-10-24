@@ -3,14 +3,16 @@ dbmigrate
 
 There are many high quality automatic database migration tools such as [Ruby on Rails' ActiveRecord migrations](http://guides.rubyonrails.org/migrations.html) and [South](http://south.aeracode.org/) for Django. Unfortunately, most that I could find were tightly coupled with a particular framework. Since I work with many different frameworks and I don't like manually migrating database schemas I wrote dbmigrate.
 
+
 Usage
 -----
 
     Usage:
              create - create a new migration file
             migrate - migrate a database to the current schema
-    
-    
+            renamed - rename files in the migration table if the order changed
+
+
     Options:
       -h, --help            show this help message and exit
       -o, --out-of-order    allow migrations to be run out of order
@@ -23,13 +25,17 @@ Usage
       -d DIRECTORY, --directory=DIRECTORY
                             directory where the migrations are stored
 
+
 Examples
 --------
 
 If these commands are run without --dry-run they will perform the specified actions.
 
-     % dbmigrate --dry-run --engine sqlite -c :memory: create test
-    Would create dbmigrations/20120116095350-test.sql
+     % dbmigrate --dry-run create test
+    Would create ./20120116095350-test.sql
+
+     % dbmigrate create "some slug" py -n -d /tmp
+    Would create /tmp/20121024185140-some-slug.py
 
      % dbmigrate --dry-run --engine sqlite -c :memory: -d tests/fixtures/initial migrate
     BEGIN;
