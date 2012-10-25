@@ -29,13 +29,16 @@ Usage
 Examples
 --------
 
-If these commands are run without --dry-run they will perform the specified actions.
+If these commands are run without --dry-run (-n), they will perform the specified actions.
 
      % dbmigrate --dry-run create test
-    Would create ./20120116095350-test.sql
+    Would create ./20121024224936-test.sql with:
+    -- add your migration here
 
      % dbmigrate create "some slug" py -n -d /tmp
-    Would create /tmp/20121024185140-some-slug.py
+    Would create /tmp/20121024224833-some-slug.py with:
+    #!/usr/bin/env python
+    # add migration here
 
      % dbmigrate --dry-run -d tests/fixtures/initial migrate
     sql: -- start filename: 20120115075349-create-user-table.sql sha1: 0187aa5e13e268fc621c894a7ac4345579cf50b7
@@ -46,6 +49,28 @@ If these commands are run without --dry-run they will perform the specified acti
       password_sha1 varchar(40)
     );
     INSERT INTO dbmigration (filename, sha1, date) VALUES ('20120115075349-create-user-table.sql', '0187aa5e13e268fc621c894a7ac4345579cf50b7', datetime());
+
+
+Environment Variables
+---------------------
+
+Instead of using `-e` and `-c` for the migrate command,
+the environment variables, `DBMIGRATE_ENGINE` and `DBMIGRATE_CONNECTION`
+may be used. The defaults are equivalent to:
+
+    export DBMIGRATE_ENGINE=sqlite
+    export DBMIGRATE_CONNECTION=:memory:
+
+For the `create` command, you can change the defaults with
+`DBMIGRATE_CREATE_CONTENT`. The default would be something like:
+
+    read -d '' -r DBMIGRATE_CREATE_CONTENT <<"EOF"
+    {
+        'sql': '-- add your migration here',
+        'py': '#!/usr/bin/env python\n# add migration here'
+    }
+    EOF
+    export DBMIGRATE_CREATE_CONTENT
 
 
 Behavior
