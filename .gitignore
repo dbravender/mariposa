@@ -1,6 +1,7 @@
 *.pyc
 /build
-/dbmigrate.egg-info
+/mariposa.egg-info
+/dist
 /.env
 /.tox
 *.swp

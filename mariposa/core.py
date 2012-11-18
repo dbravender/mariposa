@@ -1,4 +1,4 @@
-from dbmigrate.command import command
+from mariposa.command import command
 from hashlib import sha1
 from optparse import OptionParser
 from datetime import datetime
@@ -7,8 +7,8 @@ import subprocess
 import logging
 import os
 import sys
-from dbmigrate import dbengines
-from dbmigrate.dbengines import FilenameSha1
+from mariposa import dbengines
+from mariposa.dbengines import FilenameSha1
 
 
 logger = logging.getLogger(__name__)
@@ -187,8 +187,8 @@ def main():
             'DBMIGRATE_ENGINE', options['engine'])
         options['connection_string'] = os.environ.get(
             'DBMIGRATE_CONNECTION', options['connection_string'])
-        dbmigrate = DBMigrate(**options)
-        result = command.commands[args[0]](dbmigrate, *args[1:])
+        mariposa = DBMigrate(**options)
+        result = command.commands[args[0]](mariposa, *args[1:])
         if result:
             print(result)
 
